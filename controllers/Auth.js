@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const {
   EMAIL_THEME,
@@ -22,6 +23,63 @@ const FRONTEND_BASE_URL =
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
+}
+
+function getRequestCorrelationId(req) {
+  const candidates = [
+    req.headers['x-request-id'],
+    req.headers['x-correlation-id'],
+    req.headers['x-vercel-id'],
+    req.headers['x-amzn-trace-id']
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      const firstValue = String(candidate[0] || '').trim();
+      if (firstValue) {
+        return firstValue;
+      }
+      continue;
+    }
+
+    const value = String(candidate || '').trim();
+    if (value) {
+      return value;
+    }
+  }
+
+  return 'n/a';
+}
+
+function hashEmailForLog(email) {
+  const normalizedEmail = normalizeEmail(email);
+
+  if (!normalizedEmail) {
+    return 'n/a';
+  }
+
+  return crypto
+    .createHash('sha256')
+    .update(normalizedEmail)
+    .digest('hex')
+    .slice(0, 12);
+}
+
+function logOtpEmailFailure(action, req, email, error) {
+  console.error(
+    '[otp-email] send failure',
+    JSON.stringify({
+      event: 'otp_email_send_failed',
+      action,
+      requestId: getRequestCorrelationId(req),
+      emailHash: hashEmailForLog(email),
+      errorName: error?.name || 'Error',
+      errorCode: error?.code || null,
+      responseCode: error?.responseCode || null,
+      command: error?.command || null,
+      message: error?.message || 'Unknown email send error'
+    })
+  );
 }
 
 function trimValue(value) {
@@ -293,6 +351,7 @@ exports.registerInitiate = async (req, res) => {
     try {
       await sendOtpEmail(user, otpCode);
     } catch (error) {
+      logOtpEmailFailure('api.auth.registerInitiate', req, user.email, error);
       return res.status(502).json({
         success: false,
         code: 'OTP_EMAIL_SEND_FAILED',
@@ -516,6 +575,7 @@ exports.resendOtp = async (req, res) => {
     try {
       await sendOtpEmail(user, otpCode);
     } catch (error) {
+      logOtpEmailFailure('api.auth.resendOtp', req, user.email, error);
       return res.status(502).json({
         success: false,
         code: 'OTP_EMAIL_SEND_FAILED',

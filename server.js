@@ -23,6 +23,38 @@ connectDB();
 
 const app = express();
 
+function parseTrustProxyHops(rawValue) {
+  const normalizedValue = String(rawValue ?? '').trim();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const parsedValue = Number(normalizedValue);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 0) {
+    throw new Error('Invalid TRUST_PROXY_HOPS. Expected a non-negative integer.');
+  }
+
+  return parsedValue;
+}
+
+function resolveTrustProxySetting() {
+  const configuredHops = parseTrustProxyHops(process.env.TRUST_PROXY_HOPS);
+
+  if (configuredHops !== null) {
+    return configuredHops;
+  }
+
+  return process.env.VERCEL ? 1 : false;
+}
+
+const trustProxySetting = resolveTrustProxySetting();
+app.set('trust proxy', trustProxySetting);
+console.log(
+  `[config] trust proxy = ${trustProxySetting === false ? 'false' : trustProxySetting}`
+);
+
 // Swagger setup (scan routes folder)
 const swaggerOptions = {
   swaggerDefinition: {

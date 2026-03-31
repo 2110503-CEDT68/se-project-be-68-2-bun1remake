@@ -104,6 +104,11 @@ be-project-68-bun1/
    OTP_EXPIRE_MINUTES=10
    OTP_RESEND_COOLDOWN_SECONDS=60
    OTP_MAX_ATTEMPTS=5
+   EMAIL_USER=your-gmail-address@gmail.com
+   EMAIL_PASS=your-gmail-app-password
+   EMAIL_FROM=your-gmail-address@gmail.com
+   EMAIL_FROM_NAME=Hotel Booking
+   TRUST_PROXY_HOPS=1
    ```
 
 4. **Start the server**
@@ -111,6 +116,12 @@ be-project-68-bun1/
    npm start
    ```
    Server runs at `http://localhost:5000`
+
+### Production deployment checklist
+- Set all `EMAIL_*` variables in Vercel project settings. Do not rely on local `config/config.env` in production.
+- Use a Gmail App Password for `EMAIL_PASS` (normal account password will fail).
+- Set `TRUST_PROXY_HOPS=1` on Vercel unless your proxy chain differs.
+- After deploy, verify registration and resend OTP endpoints return JSON responses and no `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` appears in logs.
 
 ---
 
@@ -333,6 +344,11 @@ taskkill /PID {PID} /F
 **Q: Login says email is not verified**
 - Complete `POST /api/v1/auth/verify-otp` first
 - If the OTP expired, call `POST /api/v1/auth/resend-otp`
+
+**Q: OTP email send fails (`OTP_EMAIL_SEND_FAILED`)**
+- Verify `EMAIL_USER`, `EMAIL_PASS`, and `EMAIL_FROM` are configured in deployment environment variables.
+- Ensure `EMAIL_PASS` is a Gmail App Password and sender account is allowed to send via SMTP.
+- Check backend logs for structured `[mail] send failure` and `[otp-email] send failure` entries.
 
 ---
 
