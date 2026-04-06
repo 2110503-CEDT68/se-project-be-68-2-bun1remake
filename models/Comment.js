@@ -5,17 +5,17 @@ const CommentSchema = new mongoose.Schema({
         type : Date,
         required : [true,'Date is missing']
     },
-    userId:{
+    user:{
         type : mongoose.Schema.Types.ObjectId,
         ref:'User',
         required: true
     },
-    hotelId:{
+    hotel:{
         type : mongoose.Schema.Types.ObjectId,
         ref:'Hotel',
         required: true
     },
-    comment:{
+    text:{
         type: String,
         default: 'Comment Placeholder'
     },
