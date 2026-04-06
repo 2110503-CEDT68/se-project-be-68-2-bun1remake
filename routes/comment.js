@@ -13,7 +13,7 @@ const router = express.Router({ mergeParams: true });
 
 router
   .route('/')
-  .get(protect, getComments)
+  .get(getComments)
   .post(protect, createComment);
 
 router
