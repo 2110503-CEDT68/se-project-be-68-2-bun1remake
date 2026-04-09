@@ -2,7 +2,8 @@ const hotelFilter = (query) => {
     let mongoQuery = {};
 
     if (query.province) {
-        mongoQuery.province = query.province;
+        const provinces = query.province.split(',');
+        mongoQuery.province = { $in: provinces };
     }
 
     if (query.priceRange) {
@@ -14,7 +15,8 @@ const hotelFilter = (query) => {
     }
 
     if (query.review) {
-        mongoQuery.review = { $gte: Number(query.review) };
+        const types = query.accommodationType.split(',');
+        mongoQuery.accommodationType = { $in: types };
     }
 
     if (query.accommodationType) {
