@@ -60,7 +60,9 @@ const HotelSchema = new mongoose.Schema({
     required: [true, 'Please add a accommodation type']
   },
   specializations: {
-    facility: { type: [String], default: [] }
+    location: { type: [String], default: [] },
+    facility: { type: [String], default: [] },
+    accessibility: { type: [String], default: [] }
   }
 }, {
   toJSON: { virtuals: true },
