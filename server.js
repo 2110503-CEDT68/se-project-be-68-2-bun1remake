@@ -101,10 +101,9 @@ app.use(cors());
 const authRoutes = require('./routes/auth');
 const hotelsRoutes = require('./routes/Hotel');
 const bookingRoutes = require('./routes/bookings'); // routes/booking.js (uses mergeParams)
-
 // Mount routes
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/hotels', hotelsRoutes);      // includes nested /:hotelId/bookings
+app.use('/api/v1/hotels', hotelsRoutes);      // includes nested /:hotelId/bookings and /:hotelId/comments
 app.use('/api/v1/bookings', bookingRoutes);   // optional direct bookings endpoint
 
 // Health check (optional)
