@@ -74,7 +74,7 @@ exports.updateComment = async (req, res, next) => {
       req.body,
       { new: true, runValidators: true }
     );
-
+    //if comment not found then return
     if (!comment) {
       return res.status(404).json({ success: false });
     }
@@ -83,6 +83,7 @@ exports.updateComment = async (req, res, next) => {
   } catch (err) {
     res.status(400).json({ success: false });
   }
+
 };
 
 // @desc    Delete comment
@@ -98,11 +99,12 @@ exports.deleteComment = async (req, res, next) => {
         message: `Comment not found with id ${req.params.id}`
       });
     }
-
+    //Delete comment just one
     await comment.deleteOne();
 
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
     res.status(400).json({ success: false });
   }
+
 };
