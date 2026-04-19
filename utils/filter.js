@@ -1,10 +1,6 @@
 const hotelFilter = (query) => {
     let mongoQuery = {};
 
-    if (query.province) {
-       mongoQuery.province = { $in: query.province.split(',') };
-    }
-
     if (query.priceRange) {
         const p = query.priceRange;
         if (p === '1') mongoQuery.price = { $lt: 30 };
@@ -37,6 +33,16 @@ const hotelFilter = (query) => {
     if (query.facility) {
         const facilities = query.facility.split(',');
         mongoQuery["specializations.facility"] = { $all: facilities };
+    }
+
+    if (query.location) {
+        const location = query.location.split(',');
+        mongoQuery["specializations.location"] = { $all: location };
+    }
+
+    if (query.accessibility) {
+        const accessibility = query.accessibility.split(',');
+        mongoQuery["specializations.accessibility"] = { $all: accessibility };
     }
 
     return mongoQuery;

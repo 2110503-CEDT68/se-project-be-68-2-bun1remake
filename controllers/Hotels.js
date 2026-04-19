@@ -14,20 +14,20 @@ exports.getHotels = async (req, res, next) => {
 
   let mongoQuery = {};
 
-  if (reqQuery.priceRange) {
-    const p = reqQuery.priceRange;
-    if (p === '1') mongoQuery.price = { $lt: 30 };
-    else if (p === '2') mongoQuery.price = { $gte: 30, $lt: 80 };
-    else if (p === '3') mongoQuery.price = { $gte: 80, $lt: 200 };
-    else if (p === '4') mongoQuery.price = { $gte: 200 };
-    delete reqQuery.priceRange;
-  }
+  delete reqQuery.priceRange;
+  delete reqQuery.review;
+  delete reqQuery.accommodationType;
+  delete reqQuery.facility;
+  delete reqQuery.location;
+  delete reqQuery.accessibility;
 
   let remainingQueryStr = JSON.stringify(reqQuery);
   remainingQueryStr = remainingQueryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, m => `$${m}`);
   const baseQuery = { ...JSON.parse(remainingQueryStr), ...mongoQuery };
+  const { review: reviewFilter, ...filterQuery } = hotelFilter(req.query);
+  const finalBaseQuery = { ...baseQuery, ...filterQuery };
 
-  const pipeline = [{ $match: baseQuery }];
+  const pipeline = [{ $match: finalBaseQuery }];
 
   pipeline.push(
     { 
@@ -47,10 +47,8 @@ exports.getHotels = async (req, res, next) => {
     { $project: { commentData: 0 } }
   );
 
-  if (req.query.review) {
-    pipeline.push({ 
-      $match: { averageRating: { $gte: Number(req.query.review) } } 
-    });
+  if (reviewFilter) {
+    pipeline.push({ $match: { review: reviewFilter } });
   }
 
   if (req.query.sort) {
