@@ -40,13 +40,15 @@ exports.getComments = async (req, res, next) => {
 // @access  Private
 exports.createComment = async (req, res, next) => {
   try {
-    // Add hotelId to req.body from URL params
     req.body.hotel = req.params.hotelId;
-    
-    // Add userId to req.body from logged in user
     req.body.user = req.user.id;
 
-    // Check if the hotel exists before commenting
+    // Frontend sends 'comment'; schema expects 'text'. Accept either.
+    if (req.body.comment && !req.body.text) {
+      req.body.text = req.body.comment;
+      delete req.body.comment;
+    }
+
     const hotel = await Hotel.findById(req.params.hotelId);
     if (!hotel) {
       return res.status(404).json({ success: false, message: "Hotel not found" });
@@ -54,13 +56,30 @@ exports.createComment = async (req, res, next) => {
 
     const comment = await Comment.create(req.body);
 
-    res.status(201).json({
-      success: true,
-      data: comment
-    });
+    res.status(201).json({ success: true, data: comment });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Could not create comment" });
+  }
+};
+
+// @desc    Delete a comment
+// @route   DELETE /api/v1/comments/:id
+// @access  Private (owner or admin)
+exports.deleteComment = async (req, res, next) => {
+  try {
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) {
+      return res.status(404).json({ success: false, message: "Comment not found" });
+    }
+    if (comment.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Not authorized to delete this comment" });
+    }
+    await comment.deleteOne();
+    res.status(200).json({ success: true, data: {} });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Could not delete comment" });
   }
 };
 
