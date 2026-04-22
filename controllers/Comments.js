@@ -32,16 +32,23 @@ exports.getComments = async (req, res, next) => {
 
 // @desc    Create new comments
 // @route   POST /api/v1/comments
-// @access  Private
+// @access  Public (guests allowed; logged-in users get their name from session)
 exports.createComment = async (req, res, next) => {
   try {
-    // Add hotelId to req.body from URL params
     req.body.hotel = req.params.hotelId;
-    
-    // Add userId to req.body from logged in user
-    req.body.user = req.user.id;
 
-    // Check if the hotel exists before commenting
+    if (req.user) {
+      // Logged-in user: attach their DB id, strip any client-supplied guestName
+      req.body.user = req.user.id;
+      delete req.body.guestName;
+    } else {
+      // Guest: no user reference, store optional display name
+      req.body.user = undefined;
+      req.body.guestName = req.body.guestName
+        ? String(req.body.guestName).trim().slice(0, 50)
+        : 'Guest';
+    }
+
     const hotel = await Hotel.findById(req.params.hotelId);
     if (!hotel) {
       return res.status(404).json({ success: false, message: "Hotel not found" });
@@ -95,14 +102,22 @@ exports.deleteComment = async (req, res, next) => {
       });
     }
 
-    if (
+    // Guest comments (no user): only admins may delete
+    if (!comment.user) {
+      if (!req.user || req.user.role !== 'admin') {
+        return res.status(401).json({
+          success: false,
+          message: 'Not authorized to delete this comment'
+        });
+      }
+    } else if (
       comment.user.toString() !== req.user.id &&
       req.user.role !== 'admin'
     ) {
       return res.status(401).json({
         success: false,
-        message: `NOt authorized to delete this comment`
-      }); 
+        message: 'Not authorized to delete this comment'
+      });
     }
     await comment.deleteOne();
 

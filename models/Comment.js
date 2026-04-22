@@ -4,7 +4,11 @@ const CommentSchema = new mongoose.Schema({
     user:{
         type : mongoose.Schema.Types.ObjectId,
         ref:'User',
-        required: true
+        required: false   // null for guest comments
+    },
+    guestName:{
+        type: String,
+        default: null
     },
     hotel:{
         type : mongoose.Schema.Types.ObjectId,

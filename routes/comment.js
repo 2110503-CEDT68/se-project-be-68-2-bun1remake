@@ -6,14 +6,14 @@ const {
   deleteComment
 } = require('../controllers/Comments');
 
-const { protect } = require('../middleware/auth');
+const { protect, optionalProtect } = require('../middleware/auth');
 
 const router = express.Router({ mergeParams: true });
 
 router
   .route('/')
   .get(getComments)
-  .post(protect, createComment);
+  .post(optionalProtect, createComment);
 
 router
   .route('/:id')

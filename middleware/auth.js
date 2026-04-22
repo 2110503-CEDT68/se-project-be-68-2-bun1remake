@@ -53,6 +53,43 @@ exports.protect = async (req, res, next) => {
 
 
 /* =====================================
+   🔓 OPTIONAL PROTECT (guest-friendly)
+===================================== */
+exports.optionalProtect = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  // No token → continue as guest
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('+currentToken');
+
+    if (!user || user.currentToken !== token || user.isVerified === false) {
+      req.user = null;
+      return next();
+    }
+
+    req.user = user;
+    next();
+  } catch (err) {
+    req.user = null;
+    next();
+  }
+};
+
+
+/* =====================================
    🔒 AUTHORIZE ROLES
 ===================================== */
 exports.authorize = (...roles) => {
