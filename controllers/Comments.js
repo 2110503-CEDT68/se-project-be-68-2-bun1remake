@@ -104,8 +104,7 @@ exports.deleteComment = async (req, res, next) => {
         message: `NOt authorized to delete this comment`
       }); 
     }
-    //Delete comment just one
-    if(comment.p)
+
     await comment.deleteOne();
 
     res.status(200).json({ success: true, data: {} });
