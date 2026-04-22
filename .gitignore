@@ -4,3 +4,4 @@ repomix-output.xml
 *.log
 config.env
 Hotelmania.postman_collection.json
+package-lock.json
