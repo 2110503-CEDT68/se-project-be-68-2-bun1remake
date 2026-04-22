@@ -44,9 +44,10 @@ exports.createComment = async (req, res, next) => {
     } else {
       // Guest: no user reference, store optional display name
       req.body.user = undefined;
+      // Use whatever name the FE sent, or generate a fallback in the same format
       req.body.guestName = req.body.guestName
-        ? String(req.body.guestName).trim().slice(0, 50)
-        : 'Guest';
+        ? String(req.body.guestName).trim().slice(0, 60)
+        : 'Guest-' + Math.random().toString(36).slice(2, 8).toUpperCase();
     }
 
     const hotel = await Hotel.findById(req.params.hotelId);
