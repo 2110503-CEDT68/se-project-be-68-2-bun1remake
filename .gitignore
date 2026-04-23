@@ -6,3 +6,4 @@ config.env
 Hotelmania.postman_collection.json
 Bun1.postman_collection.json
 package-lock.json
+coverage/*
