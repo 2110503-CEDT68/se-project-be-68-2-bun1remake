@@ -17,7 +17,7 @@ describe('getComments Controller', () => {
     jest.clearAllMocks();
   });
 
-it('return comment with status 200 and comments data when search with hotelID', async () => {
+it('Query comment WITH HotelID (return 200:success)', async () => {
   // Create a fake req and a fake res
   const req = { params: { hotelId: '123' } };
   const res = { 
@@ -53,9 +53,9 @@ const next = jest.fn();
 });
 });
 
-it('should return comment with status 200 and comments data without hotelID', async () => {
+it('Query comment without HotelID (return 200:success)', async () => {
   // Create a fake req and a fake res
-  const req = {params:{}};
+  const req = {params: { hotelId: '123' }};
   const res = { 
     status: jest.fn().mockReturnThis(), 
     json: jest.fn().mockReturnThis() 
@@ -90,7 +90,35 @@ const next = jest.fn();
   success: true,
   count: 2, 
   data: mockComments
+  });
 });
+
+it('should return comment with status 500 for invalid (500:Server Error) ', async () => {
+  // Create a fake req and a fake res
+  const req = {params: {}};
+  const res = { 
+    status: jest.fn().mockReturnThis(), 
+    json: jest.fn().mockReturnThis() 
+  };
+  
+  //sample error
+  const mockError = new Error('Database Connect Failed')
+
+  //query function
+  const mockQuery = {
+    populate: jest.fn().mockRejectedValue(mockError)
+  };
+
+  Comment.find.mockReturnValue(mockQuery);
+
+  const next = jest.fn();
+  await getComments(req, res ,next);
+  
+  expect(res.status).toHaveBeenCalledWith(500);
+  expect(res.json).toHaveBeenCalledWith({
+  message : "Server Error",
+  success: false
+  });
 });
 });
 
