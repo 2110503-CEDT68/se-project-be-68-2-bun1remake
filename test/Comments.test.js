@@ -129,7 +129,7 @@ it('Create new comment (201: Created)' ,async ( )=> {
     //sample comments
     const mockComment = 
     {
-      text : "เป็นความผิดของ Gemini,Claude,ChatGPT,Deepseek,Grok,Larma,Kimi,Qwen,Mimo,Ling,MiniMax,GLM,Composer,Cursor, และ Copilot ",
+      text : "เป็นความผิดของ Gemini,Claude,ChatGPT,Deepseek,Grok,Larma,Kimi,Qwen,Mimo,Ling,MiniMax,GLM,Composer,Cursor, และ Copilot",
       rating : 2,
       hotel: mockHotelId, 
     };
