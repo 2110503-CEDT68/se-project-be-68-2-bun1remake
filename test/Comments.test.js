@@ -1,6 +1,6 @@
 jest.mock('../models/Comment');
 
-const { getComments,createComment } = require('../controllers/Comments'); 
+const { getComments,createComment,deleteComment } = require('../controllers/Comments'); 
 const Hotel = require('../models/Hotel')
 const Comment = require('../models/Comment');
 
@@ -21,10 +21,6 @@ describe('getComments Controller', () => {
 it('Query comment WITH HotelID (return 200:success)', async () => {
   // Create a fake req and a fake res
   const req = { params: { hotelId: '123' } };
-  const res = { 
-    status: jest.fn().mockReturnThis(), 
-    json: jest.fn().mockReturnThis() 
-  };
 
   //sample comment
   const mockComments = [
@@ -43,7 +39,6 @@ const mockQuery = {
 };
 
 Comment.find.mockReturnValue(mockQuery);
-const next = jest.fn();
  await getComments(req, res ,next);
 
   expect(res.status).toHaveBeenCalledWith(200);
@@ -55,12 +50,7 @@ const next = jest.fn();
 });
 
 it('Query comment without HotelID (return 200: Success)', async () => {
-  // Create a fake req and a fake res
-  const req = {params: {}};
-  const res = { 
-    status: jest.fn().mockReturnThis(), 
-    json: jest.fn().mockReturnThis() 
-  };
+  //create a fake req and a fake res
 
   //sample comment
   const mockComments = [{
@@ -83,7 +73,6 @@ it('Query comment without HotelID (return 200: Success)', async () => {
   };
 
 Comment.find.mockReturnValue(mockQuery);
-const next = jest.fn();
  await getComments(req, res ,next);
 
   expect(res.status).toHaveBeenCalledWith(200);
@@ -95,13 +84,7 @@ const next = jest.fn();
 });
 
 it('Return comment with status 500 (500: Server Error) ', async () => {
-  // Create a fake req and a fake res
-  const req = {params: {}};
-  const res = { 
-    status: jest.fn().mockReturnThis(), 
-    json: jest.fn().mockReturnThis() 
-  };
-  
+  const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   //sample error
   const mockError = new Error('Database Connect Failed')
 
@@ -112,7 +95,6 @@ it('Return comment with status 500 (500: Server Error) ', async () => {
 
   Comment.find.mockReturnValue(mockQuery);
 
-  const next = jest.fn();
   await getComments(req, res ,next);
   
   expect(res.status).toHaveBeenCalledWith(500);
@@ -120,6 +102,8 @@ it('Return comment with status 500 (500: Server Error) ', async () => {
   message : "Server Error",
   success: false
   });
+
+  consoleSpy.mockRestore();
 });
 });
 
@@ -163,7 +147,6 @@ it('Create new comment (201: Created)' ,async ( )=> {
     user: '507f1f77bcf86cd799432341'
   });
 
-    const next = jest.fn();
     await createComment(req, res ,next);
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
@@ -192,7 +175,6 @@ it('Create new comment (201: Created)' ,async ( )=> {
     req.params = { hotelId: '507f1f77bcf86cd799439011' };
     req.user = { id: '507f1f77bcf86cd799432341' };
 
-    const next = jest.fn();
     await createComment(req, res ,next);
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
@@ -202,24 +184,96 @@ it('Create new comment (201: Created)' ,async ( )=> {
   });
 
   it('Create new comment is invalid (500: Could not create comment)' ,async ( )=> {
-
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     //sample hotel
     const mockHotelId = '507f1f77bcf86cd799439011';
 
-     //sample error
-    const mockError = new Error('Database Connect Failed')
+    //sample user
+    const mockUserId = '507f1f77bcf86cd799432341';
 
+    req.params = { hotelId: mockHotelId };
+    req.user = { id: mockUserId }; 
+    req.body = { text: "Test comment", rating: 5 };
 
     Hotel.findOne = jest.fn().mockResolvedValue(mockHotelId);
 
-    req.body = mockError;
+    Comment.create = jest.fn().mockRejectedValue(new Error('Database Connect Failed'));
 
-    const next = jest.fn();
     await createComment(req, res ,next);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
     success: false,
     message: 'Could not create comment'
+    });
+
+    consoleSpy.mockRestore();
+  });
+});
+
+describe('deleteComment Controller', () => {
+  let req, res, next;
+
+  //EACH RUN SETUP
+  beforeEach(() => {
+    req = { params: {} };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+    next = jest.fn();
+    jest.clearAllMocks();
+  });
+
+it('Delete comment (200: Success)' ,async ( )=> {
+
+   // Create a fake req and a fake res
+  const req = { params: { comment: '507f1f77bcf86cd799439011' } };
+  const mockCommentId = '507f1f77bcf86cd799439011';
+  const mockUserId = '507f1f77bcf86cd799432341';
+  
+  req.params = {id: mockCommentId }; 
+  req.user = {id: mockUserId, role: 'user' };
+
+  const mockCommentInstance = {
+    _id: mockCommentId,
+    user: mockUserId,
+    deleteOne: jest.fn().mockResolvedValue({})
+  };
+
+  Comment.findById = jest.fn().mockResolvedValue(mockCommentInstance);
+   
+  await deleteComment(req, res ,next);
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith({
+    success : true,
+    data: {}
+    });
+  });
+
+  it('Delete comment failed because no comment found (404: Not found)' ,async ( )=> {
+
+   // Create a fake req and a fake res
+  const req = { params: { comment: '507f1f77bcf86cd799439011' } };
+  const res = { 
+    status: jest.fn().mockReturnThis( ), 
+    json: jest.fn().mockReturnThis() 
+  };
+
+  const mockCommentId = '507f1f77bcf86cd799439011';
+  const mockUserId = '507f1f77bcf86cd799432341';
+  
+  req.params = {_id: mockCommentId }; 
+  req.user = {_id: mockUserId, role: 'user' };
+
+  const mockCommentInstance = null;
+
+  Comment.findById = jest.fn().mockResolvedValue(mockCommentInstance);
+   
+  await deleteComment(req, res ,next);
+  expect(res.status).toHaveBeenCalledWith(404);
+  expect(res.json).toHaveBeenCalledWith({
+    success: false,
+    message: `Comment not found with id ${req.params.id}`
     });
   });
 });
