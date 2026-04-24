@@ -200,5 +200,27 @@ it('Create new comment (201: Created)' ,async ( )=> {
     message: 'Hotel not found'
     });
   });
+
+  it('Create new comment is invalid (500: Could not create comment)' ,async ( )=> {
+
+    //sample hotel
+    const mockHotelId = '507f1f77bcf86cd799439011';
+
+     //sample error
+    const mockError = new Error('Database Connect Failed')
+
+
+    Hotel.findOne = jest.fn().mockResolvedValue(mockHotelId);
+
+    req.body = mockError;
+
+    const next = jest.fn();
+    await createComment(req, res ,next);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+    success: false,
+    message: 'Could not create comment'
+    });
+  });
 });
 //TODO: ADD more test la
