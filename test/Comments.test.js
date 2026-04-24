@@ -25,7 +25,7 @@ it('Query comment WITH HotelID (return 200:success)', async () => {
   //sample comment
   const mockComments = [
   {
-    _id: '507f1f77bcf86cd799439011',
+    id: '507f1f77bcf86cd799439011',
     text: 'Amazing stay!',
     rating: 5,
     hotel: { name: 'Grand Bangkok', imgsrc: 'hotel.jpg' }, 
@@ -54,13 +54,13 @@ it('Query comment without HotelID (return 200: Success)', async () => {
 
   //sample comment
   const mockComments = [{
-    _id: '507f1f77bcf86cd799439011',
+    id: '507f1f77bcf86cd799439011',
     text: 'Amazing stay!',
     rating: 5,
     hotel: { name: 'Grand Bangkok', imgsrc: 'hotel.jpg' }, 
     user: { name: 'John Doe', email: 'john123@example.com' }
   },{
-    _id: '507f1f77bcf86cd799439012',
+    id: '507f1f77bcf86cd799439012',
     text: 'Good',
     rating: 4,
     hotel: { name: 'Grand Sahara', imgsrc: 'hotel2.jpg' }, 
@@ -83,7 +83,7 @@ Comment.find.mockReturnValue(mockQuery);
   });
 });
 
-it('Return comment with status 500 (500: Server Error) ', async () => {
+it('Return comment FAILED (500: Server Error) ', async () => {
   const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   //sample error
   const mockError = new Error('Database Connect Failed')
@@ -121,7 +121,7 @@ describe('createComment Controller', () => {
     jest.clearAllMocks();
   });
 
-it('Create new comment (201: Created)' ,async ( )=> {
+it('Create new comment successfully (201: Created)' ,async ( )=> {
 
     //sample hotel
     const mockHotelId = '507f1f77bcf86cd799439011';
@@ -134,7 +134,7 @@ it('Create new comment (201: Created)' ,async ( )=> {
       hotel: mockHotelId, 
     };
 
-   Hotel.findOne = jest.fn().mockResolvedValue({ _id: mockHotelId });
+   Hotel.findOne = jest.fn().mockResolvedValue({ id: mockHotelId });
 
    req.body = mockComment;
      req.params = { hotelId: '507f1f77bcf86cd799439011' };
@@ -142,7 +142,7 @@ it('Create new comment (201: Created)' ,async ( )=> {
     
 
     Comment.create = jest.fn().mockResolvedValue({
-    _id: '507f1f77bcf86cd799439233',
+    id: '507f1f77bcf86cd799439233',
     ...mockComment,
     user: '507f1f77bcf86cd799432341'
   });
@@ -156,7 +156,7 @@ it('Create new comment (201: Created)' ,async ( )=> {
 });
 
 
-  it('Create new comment but hotelId is invalid (404: Hotel not found)' ,async ( )=> {
+  it('Create new comment but hotelId is NOT found (404: Not found)' ,async ( )=> {
 
     //sample hotel
     const mockHotelId = null;
@@ -183,7 +183,7 @@ it('Create new comment (201: Created)' ,async ( )=> {
     });
   });
 
-  it('Create new comment is invalid (500: Could not create comment)' ,async ( )=> {
+  it('Create new comment is INVALID (500: Could not create comment)' ,async ( )=> {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     //sample hotel
     const mockHotelId = '507f1f77bcf86cd799439011';
@@ -224,10 +224,11 @@ describe('deleteComment Controller', () => {
     jest.clearAllMocks();
   });
 
-it('Delete comment (200: Success)' ,async ( )=> {
+it('Delete comment successfully in normal conditions (200: Success)' ,async ( )=> {
 
-   // Create a fake req and a fake res
+   //create a fake req
   const req = { params: { comment: '507f1f77bcf86cd799439011' } };
+
   const mockCommentId = '507f1f77bcf86cd799439011';
   const mockUserId = '507f1f77bcf86cd799432341';
   
@@ -235,7 +236,7 @@ it('Delete comment (200: Success)' ,async ( )=> {
   req.user = {id: mockUserId, role: 'user' };
 
   const mockCommentInstance = {
-    _id: mockCommentId,
+    id: mockCommentId,
     user: mockUserId,
     deleteOne: jest.fn().mockResolvedValue({})
   };
@@ -250,20 +251,17 @@ it('Delete comment (200: Success)' ,async ( )=> {
     });
   });
 
-  it('Delete comment failed because no comment found (404: Not found)' ,async ( )=> {
+  it('Delete comment FAILED when no comment found (404: Not found)' ,async ( )=> {
 
-   // Create a fake req and a fake res
+   //create a fake req
   const req = { params: { comment: '507f1f77bcf86cd799439011' } };
-  const res = { 
-    status: jest.fn().mockReturnThis( ), 
-    json: jest.fn().mockReturnThis() 
-  };
 
+  //sample comment & user ID
   const mockCommentId = '507f1f77bcf86cd799439011';
   const mockUserId = '507f1f77bcf86cd799432341';
   
-  req.params = {_id: mockCommentId }; 
-  req.user = {_id: mockUserId, role: 'user' };
+  req.params = {id: mockCommentId }; 
+  req.user = {id: mockUserId, role: 'user' };
 
   const mockCommentInstance = null;
 
@@ -275,6 +273,94 @@ it('Delete comment (200: Success)' ,async ( )=> {
     success: false,
     message: `Comment not found with id ${req.params.id}`
     });
+  });
+
+  it('Delete comment successfully as admin (200: Success)' ,async ( )=> {
+
+   // Create a fake req and a fake res
+  const req = { params: { comment: '507f1f77bcf86cd799439011' } };
+  const res = { 
+    status: jest.fn().mockReturnThis( ), 
+    json: jest.fn().mockReturnThis() 
+  };
+
+  //sample comment & user ID
+  const mockCommentId = '507f1f77bcf86cd799439011';
+  const mockUserId = '507f1f77bcf86cd799432341'; //mock user's ID
+  
+  req.params = {id: mockCommentId }; 
+  req.user = {id: '9b1db3d9e833056f45a49528', role: 'admin' }; //admin's ID
+
+
+  //mcok user's comment
+  const mockCommentInstance = {
+    id: mockCommentId,
+    user: mockUserId,
+    deleteOne: jest.fn().mockResolvedValue({})
+  };
+
+  Comment.findById = jest.fn().mockResolvedValue(mockCommentInstance);
+   
+  await deleteComment(req, res ,next);
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(res.json).toHaveBeenCalledWith({
+    success: true,
+    data : {}
+    });
+  });
+
+  it('Delete comment FAILED when user tried to erase another user\'s comment (401: Unauthorized)' ,async ( )=> {
+
+   // Create a fake req
+  const req = { params: { comment: '507f1f77bcf86cd799439011' } };
+
+  //sample comment & user ID
+  const mockCommentId = '507f1f77bcf86cd799439011';
+  const mockUserId = '507f1f77bcf86cd799432341'; //mock user's ID
+  
+  req.params = {id: mockCommentId }; 
+  req.user = {id: '921cbc0f70cbe8168b6a3692', role: 'user' }; //another user's ID
+
+
+  //mcok user's comment
+  const mockCommentInstance = {
+    id: mockCommentId,
+    user: mockUserId,
+    deleteOne: jest.fn().mockResolvedValue({})
+  };
+
+  Comment.findById = jest.fn().mockResolvedValue(mockCommentInstance);
+   
+  await deleteComment(req, res ,next);
+  expect(res.status).toHaveBeenCalledWith(401);
+  expect(res.json).toHaveBeenCalledWith({
+    success: false,
+    message: `NOt authorized to delete this comment`
+    });
+  });
+
+  it('Delete comment is INVALID (400: Bad Request)' ,async ( )=> {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
+    //create sample req
+    const req = { params: { comment: '507f1f77bcf86cd799439011' } };
+
+    //sample comment & user ID
+    const mockCommentId = '507f1f77bcf86cd799439011';
+    const mockUserId = '507f1f77bcf86cd799432341'; //mock user's ID
+  
+    req.params = {id: mockCommentId }; 
+    req.user = {id: mockUserId , role: 'user' };
+
+    Comment.findById = jest.fn().mockRejectedValue(new Error('Database Connect Failed'));;
+   
+    await deleteComment(req, res ,next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+    success: false,
+    });
+
+    consoleSpy.mockRestore();
   });
 });
 //TODO: ADD more test la
