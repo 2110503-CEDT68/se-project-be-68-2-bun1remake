@@ -155,7 +155,6 @@ it('Create new comment successfully (201: Created)' ,async ( )=> {
   });
 });
 
-
   it('Create new comment but hotelId is NOT found (404: Not found)' ,async ( )=> {
 
     //sample hotel
@@ -169,7 +168,7 @@ it('Create new comment successfully (201: Created)' ,async ( )=> {
     hotel: mockHotelId, 
   };
 
-  Hotel.findOne = jest.fn().mockResolvedValue(mockHotelId);
+  Hotel.findById = jest.fn().mockResolvedValue(mockHotelId);
 
   req.body = mockComment;
     req.params = { hotelId: '507f1f77bcf86cd799439011' };
@@ -195,7 +194,7 @@ it('Create new comment successfully (201: Created)' ,async ( )=> {
     req.user = { id: mockUserId }; 
     req.body = { text: "Test comment", rating: 5 };
 
-    Hotel.findOne = jest.fn().mockResolvedValue(mockHotelId);
+    Hotel.findById = jest.fn().mockResolvedValue({ id: mockHotelId });
 
     Comment.create = jest.fn().mockRejectedValue(new Error('Database Connect Failed'));
 
@@ -363,4 +362,79 @@ it('Delete comment successfully in normal conditions (200: Success)' ,async ( )=
     consoleSpy.mockRestore();
   });
 });
-//TODO: ADD more test la
+
+
+describe('StripHtml functional', () => {
+  let req, res, next;
+
+  //EACH RUN SETUP
+  beforeEach(() => {
+    req = { params: {} };
+    res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis()
+    };
+    next = jest.fn();
+    jest.clearAllMocks();
+  });
+
+  it('Sanitize the comment field if text is missing', async () => {
+    req.params.hotelId = '507f1f77bcf86cd799439011';
+    req.user = { id: '507f1f77bcf86cd799432341' };
+    req.body = { text: "<b>Great!</b>" }; 
+
+    Hotel.findById = jest.fn().mockResolvedValue({ _id: req.params.hotelId });
+    Comment.create = jest.fn().mockResolvedValue(req.body);
+
+    await createComment(req, res, next);
+
+    expect(Comment.create).toHaveBeenCalledWith(expect.objectContaining({
+        text: "Great!" 
+    }));
+  });
+
+  it('Handle non-string input', async () => {
+    req.params.hotelId = '507f1f77bcf86cd799439011';
+    req.user = { id: '507f1f77bcf86cd799432341' };
+    req.body = {text: 12345}; // Number instead of String
+
+      const mockCommentInstance = {
+    hotel: '507f1f77bcf86cd799439011',
+    user: '507f1f77bcf86cd799432341',
+    text: 12345
+  };
+
+    Hotel.findById = jest.fn().mockResolvedValue({ _id: req.params.hotelId });
+    Comment.create = jest.fn().mockResolvedValue(req.body);
+
+    await createComment(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+    success: true,
+       "data": mockCommentInstance
+    });
+});
+
+it('Skip sanitization if text field is missing', async () => {
+    req.params.hotelId = '507f1f77bcf86cd799439011';
+    req.user = { id: '507f1f77bcf86cd799432341' };
+    req.body = { rating: 5 }; // No text only rating
+
+    const mockCommentInstance = {
+    hotel: '507f1f77bcf86cd799439011',
+    user: '507f1f77bcf86cd799432341',
+    rating : 5
+  };
+
+    Hotel.findById = jest.fn().mockResolvedValue({ _id: req.params.hotelId });
+    Comment.create = jest.fn().mockResolvedValue(req.body);
+
+    await createComment(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith({
+    success: true,
+       "data": mockCommentInstance
+    });
+});
+});

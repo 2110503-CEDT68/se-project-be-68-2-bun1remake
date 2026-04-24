@@ -33,6 +33,7 @@ exports.getComments = async (req, res, next) => {
 // @desc    Create new comments
 // @route   POST /api/v1/comments
 // @access  Private
+
 // Strip all HTML tags, leaving plain text only
 function stripHtml(str) {
   if (typeof str !== 'string') return str;
@@ -49,7 +50,6 @@ exports.createComment = async (req, res, next) => {
 
     // Sanitize comment text — reject raw HTML injection
     if (req.body.text) req.body.text = stripHtml(req.body.text);
-    if (req.body.comment) req.body.comment = stripHtml(req.body.comment);
 
     // Check if the hotel exists before commenting
     const hotel = await Hotel.findById(req.params.hotelId);
