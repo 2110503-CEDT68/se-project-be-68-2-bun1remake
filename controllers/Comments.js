@@ -59,27 +59,6 @@ exports.createComment = async (req, res, next) => {
   }
 };
 
-// @desc    Update comment
-// @route   PUT /api/v1/comments
-// @access  Private
-exports.updateComment = async (req, res, next) => {
-  try {
-    const comment = await Comment.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    //if comment not found then return
-    if (!comment) {
-      return res.status(404).json({ success: false });
-    }
-
-    res.status(200).json({ success: true, data: comment });
-  } catch (err) {
-    res.status(400).json({ success: false });
-  }
-
-};
 
 // @desc    Delete comment
 // @route   DELETE /api/v1/comments
