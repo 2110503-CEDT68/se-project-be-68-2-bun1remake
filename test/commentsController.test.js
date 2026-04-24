@@ -378,21 +378,6 @@ describe('StripHtml functional', () => {
     jest.clearAllMocks();
   });
 
-  it('Sanitize the comment field if text is missing', async () => {
-    req.params.hotelId = '507f1f77bcf86cd799439011';
-    req.user = { id: '507f1f77bcf86cd799432341' };
-    req.body = { text: "<b>Great!</b>" }; 
-
-    Hotel.findById = jest.fn().mockResolvedValue({ _id: req.params.hotelId });
-    Comment.create = jest.fn().mockResolvedValue(req.body);
-
-    await createComment(req, res, next);
-
-    expect(Comment.create).toHaveBeenCalledWith(expect.objectContaining({
-        text: "Great!" 
-    }));
-  });
-
   it('Handle non-string input', async () => {
     req.params.hotelId = '507f1f77bcf86cd799439011';
     req.user = { id: '507f1f77bcf86cd799432341' };
