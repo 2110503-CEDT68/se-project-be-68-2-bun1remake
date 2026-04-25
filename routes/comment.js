@@ -37,7 +37,6 @@ const express = require('express');
 const {
   getComments,
   createComment,
-  updateComment,
   deleteComment
 } = require('../controllers/Comments');
 
@@ -225,7 +224,6 @@ router
  */
 router
   .route('/:id')
-  .put(protect, updateComment)
   .delete(protect, deleteComment);
 
 module.exports = router;
