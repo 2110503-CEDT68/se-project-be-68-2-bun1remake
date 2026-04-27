@@ -16,7 +16,13 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
 
 
-dotenv.config({ path: './config/config.env' });
+if (process.env.NODE_ENV !== 'production') {
+    console.log('--- Running in Development: Loading config.env file ---');
+    dotenv.config({ path: './config/config.env' });
+} else {
+    console.log('--- Running in Production (Docker): Using System Environment ---');
+    dotenv.config(); 
+}
 
 // Connect DB
 connectDB();
